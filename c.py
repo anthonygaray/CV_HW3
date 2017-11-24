@@ -12,8 +12,6 @@ from PIL import Image
 import torch.nn as nn
 import torch.utils.data as data
 
-IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
-
 class LFW(data.Dataset):
 
     def __init__(self, data_file, transform=None):
@@ -45,12 +43,11 @@ class LFW(data.Dataset):
 # Hyper Parameters
 num_epochs = 5
 batch_size = 100
-#learning_rate = 0.001
 
 # LFW Dataset
-train_dataset = LFW('train.txt', transform=transforms.ToTensor())
+train_dataset = LFW('train.txt', transform=transforms.Compose([transforms.Scale((128,128)), transforms.ToTensor()]))
 
-test_dataset = LFW('test.txt', transform=transforms.ToTensor())
+test_dataset = LFW('test.txt', transform=transforms.Compose([transforms.Scale((128,128)), transforms.ToTensor()]))
 
 # Data Loader (Input Pipeline)
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
@@ -97,7 +94,7 @@ class Net(nn.Module):
             nn.BatchNorm2d(1024)
         )
 
-    def forward_once(self, x):
+    def forward(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -106,10 +103,47 @@ class Net(nn.Module):
         out = self.layer5(out)
         return out
 
-    def forward(self, input1, input2):
-        output1 = self.forward_once(input1)
-        output2 = self.forward_once(input2)
-        return output1, output2
+    # def forward(self, input1, input2):
+    #     output1 = self.forward_once(input1)
+    #     output2 = self.forward_once(input2)
+    #     return output1, output2
 
 net = Net()
-print(net)
+net.cuda()
+
+# Loss and Optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(net.parameters())
+
+# Train the Model
+for epoch in range(num_epochs):
+    for i, (images, labels) in enumerate(train_loader):
+        images = Variable(images).cuda()
+        labels = Variable(labels).cuda()
+
+        # Forward + Backward + Optimize
+        optimizer.zero_grad()
+        outputs = net(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        if (i + 1) % 100 == 0:
+            print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f'
+                   % (epoch + 1, num_epochs, i + 1, len(train_dataset) // batch_size, loss.data[0]))
+
+# Test the Model
+net.eval()    # Change model to 'eval' mode (BN uses moving mean/var).
+correct = 0
+total = 0
+for images, labels in test_loader:
+    images = Variable(images).cuda()
+    outputs = net(images)
+    _, predicted = torch.max(outputs.data, 1)
+    total += labels.size(0)
+    correct += (predicted.cpu() == labels).sum()
+
+print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * correct / total))
+
+# Save the Trained Model
+torch.save(net.state_dict(), 'net.pkl')
