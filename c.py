@@ -4,7 +4,6 @@ import torchvision.datasets as dset
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
-import matplotlib.pyplot as plt
 import numpy as np
 from torch.autograd import Variable
 
@@ -22,6 +21,7 @@ class LFW(data.Dataset):
         values = open(self.data_file).read().split()
 
         self.data_loc = [(values[i], values[i + 1], values[i + 2]) for i in range(0, len(values), 3)]
+	self.img_data = ''
 
     def __getitem__(self, index):
 
@@ -31,13 +31,13 @@ class LFW(data.Dataset):
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
-
-        self.img_data = (img1, img2, self.data_loc[index][2])
+	
+        self.img_data = (img1, torch.from_numpy(int(self.data_loc[index][2])))
 
         return self.img_data
 
     def __len__(self):
-        return len(self.img_data)
+        return len(self.data_loc)
 
 
 # Hyper Parameters
