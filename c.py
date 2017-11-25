@@ -39,9 +39,10 @@ class LFW(data.Dataset):
 
 
 class Net(nn.Module):
-    def __init__(self):
+    def __init__(self, bin=False):
         super(Net, self).__init__()
         # set up convolution layers
+	self.bin = bin
 
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, 5, stride=1, padding=2),
@@ -76,6 +77,11 @@ class Net(nn.Module):
             nn.BatchNorm2d(1024)
         )
 
+	self.binarylayer = nn.Sequential(
+		nn.Linear(2048, 1),
+		nn.Sigmoid()
+        )
+
     def forward_once(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
@@ -88,5 +94,11 @@ class Net(nn.Module):
     def forward(self, input1, input2):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
-        return output1, output2
+
+	if (self.bin):
+		merged_out = torch.cat([output1, output2], 1)
+		out = self.binarylayer(merged_out)
+		return out
+	else:
+        	return output1, output2
 

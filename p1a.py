@@ -14,8 +14,11 @@ import sys
 
 # Hyper Parameters
 num_epochs = 5
-batch_size = 100
+batch_size = 10
 learning_rate = 0.01
+
+#if torch.cuda.is_available():
+#    torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 # LFW Dataset
 train_dataset = LFW('train.txt', transform=transforms.Compose([transforms.Scale((128, 128)), transforms.ToTensor()]))
@@ -33,7 +36,7 @@ elif(sys.argv[1] == '--save'):
 
     if (len(sys.argv) == 3):
 
-        net = Net()
+        net = Net(bin=True)
         net.cuda()
 
         # Loss and Optimizer
@@ -53,12 +56,7 @@ elif(sys.argv[1] == '--save'):
                 label = Variable(label).cuda()
 
                 # Forward + Backward + Optimize
-                output1, output2 = net(img1, img2)
-                merged_out = torch.cat([output1, output2], 1)
-
-                last_layer = nn.Sequential(nn.Linear(2048, 1), nn.Sigmoid())
-                last_layer.cuda()
-                out = last_layer(merged_out)
+                out = net(img1, img2)
 
                 optimizer.zero_grad()
                 loss = criterion(out, label)
@@ -83,10 +81,9 @@ elif (sys.argv[1] == '--load'):
 
     if (len(sys.argv) == 3):
 
-        net = Net()
+        net = Net(bin=True)
+	net.cuda()
         net.load_state_dict(torch.load(sys.argv[2]))
-
-        net.eval()
         correct = 0
         total = 0
         thresh = 0.5
@@ -95,25 +92,25 @@ elif (sys.argv[1] == '--load'):
             img1, img2, label = data
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
-            out1, out2 = net(img1, img1)
+            out = net(img1, img2)
+	    predicted = out.data.cpu().numpy()
+	    actual = label.numpy()
 
-            merged_out = torch.cat([out1, out2], 1)
+            for i, val in enumerate(predicted):
 
-            last_layer = nn.Sequential(nn.Linear(2048, 1), nn.Sigmoid())
-            last_layer.cuda()
-            out = last_layer(merged_out)
-
-            for i, val in enumerate(out):
-                if (val >= thresh):
-                    val = 1
+		if (val[0] >= thresh):
+                    round_val = 1
                 else:
-                    val = 0
+                    round_val = 0
                 
-                if (val == label[i]):
+                if (round_val == actual[i]):
                     correct += 1
 
             total += label.size(0)
-            print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
-
+	
+	print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
+	print('Correct: %d' % correct)
+	print('Total: %d' % total) 
+	
     else:
         print ("Error: File name needed")
