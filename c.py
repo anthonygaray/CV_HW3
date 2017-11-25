@@ -125,21 +125,24 @@ iteration_number = 0
 for epoch in range(num_epochs):
     for i, data in enumerate(train_loader):
         img0, img1, label = data
-	img0 = Variable(img0).cuda()
-	img1 = Variable(img1).cuda()
-	label = Variable(label).cuda()
+        img0 = Variable(img0).cuda()
+        img1 = Variable(img1).cuda()
+        label = Variable(label).cuda()
 
         # Forward + Backward + Optimize
-	output1, output2 = net(img0, img1)
-        optimizer.zero_grad()
+        output1, output2 = net(img0, img1)
+        print(output1)
 
-        loss = criterion(output1, output2, label)
-        loss.backward()
-        optimizer.step()
 
-	if i % 10 == 0:
-		print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
-		iteration_number += 10
+    #     optimizer.zero_grad()
+    #
+    #     loss = criterion(output1, output2, label)
+    #     loss.backward()
+    #     optimizer.step()
+    #
+    # if i % 10 == 0:
+    #     print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
+    #     iteration_number += 10
 
-# Save the Trained Model
-torch.save(net.state_dict(), 'net.pkl')
+# # Save the Trained Model
+# torch.save(net.state_dict(), 'net.pkl')
