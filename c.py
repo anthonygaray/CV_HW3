@@ -6,10 +6,14 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import numpy as np
 from torch.autograd import Variable
-
 from PIL import Image
 import torch.nn as nn
 import torch.utils.data as data
+
+# Hyper Parameters
+num_epochs = 5
+batch_size = 10
+learning_rate = 0.01
 
 class LFW(data.Dataset):
 
@@ -33,18 +37,13 @@ class LFW(data.Dataset):
             img2 = self.transform(img2)
 	
 	int_label = int(self.data_loc[index][2])
-	arr_label = np.array([int_label])
-        self.img_data = (img1, img2, torch.from_numpy(arr_label))
+        self.img_data = (img1, img2, torch.FloatTensor([int_label]))
 
         return self.img_data
 
     def __len__(self):
         return len(self.data_loc)
 
-
-# Hyper Parameters
-num_epochs = 5
-batch_size = 100
 
 # LFW Dataset
 train_dataset = LFW('train.txt', transform=transforms.Compose([transforms.Scale((128,128)), transforms.ToTensor()]))
@@ -114,8 +113,8 @@ net = Net()
 net.cuda()
 
 # Loss and Optimizer
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(net.parameters())
+criterion = nn.BCELoss()
+optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 
 counter = []
 loss_history = []
@@ -131,18 +130,46 @@ for epoch in range(num_epochs):
 
         # Forward + Backward + Optimize
         output1, output2 = net(img0, img1)
-        print(output1)
+        merged_out = torch.cat([output1, output2], 1)
+	
+	last_layer = nn.Sequential(nn.Linear(2048, 1), nn.Sigmoid())
+	last_layer.cuda()
+	out = last_layer(merged_out)	 
 
+	optimizer.zero_grad()
+	loss = criterion(out, label)
+	loss.backward()
+	optimizer.step()
 
-    #     optimizer.zero_grad()
-    #
-    #     loss = criterion(output1, output2, label)
-    #     loss.backward()
-    #     optimizer.step()
-    #
-    # if i % 10 == 0:
-    #     print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
-    #     iteration_number += 10
+	if i % 10 == 0:
+		print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
+		iteration_number += 10
+            	counter.append(iteration_number)
+            	loss_history.append(loss.data[0])
 
-# # Save the Trained Model
-# torch.save(net.state_dict(), 'net.pkl')
+#show_plot(counter,loss_history)
+
+# Test the Model
+#net.eval()    # Change model to 'eval' mode (BN uses moving mean/var).
+#correct = 0
+#total = 0
+
+#for i, data in enumerate(test_loader):
+#	img1, img2, label = data
+#	img1 = Variable(img1).cuda()
+#	img2 = Variable(img2).cuda()
+#	out1, out2 = net(img0, img1)
+
+#	_, predicted = torch.max(outputs.data, 1)
+	
+#for images, labels in test_loader:
+#    images = Variable(images).cuda()
+#    outputs = cnn(images)
+#    _, predicted = torch.max(outputs.data, 1)
+#    total += labels.size(0)
+#    correct += (predicted.cpu() == labels).sum()
+
+#print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * correct / total))
+
+# Save the Trained Model
+torch.save(net.state_dict(), 'net.pkl')
