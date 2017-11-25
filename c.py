@@ -32,7 +32,9 @@ class LFW(data.Dataset):
             img1 = self.transform(img1)
             img2 = self.transform(img2)
 	
-        self.img_data = (img1, torch.from_numpy(int(self.data_loc[index][2])))
+	int_label = int(self.data_loc[index][2])
+	arr_label = np.array([int_label])
+        self.img_data = (img1, img2, torch.from_numpy(arr_label))
 
         return self.img_data
 
@@ -94,7 +96,7 @@ class Net(nn.Module):
             nn.BatchNorm2d(1024)
         )
 
-    def forward(self, x):
+    def forward_once(self, x):
         out = self.layer1(x)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -103,10 +105,10 @@ class Net(nn.Module):
         out = self.layer5(out)
         return out
 
-    # def forward(self, input1, input2):
-    #     output1 = self.forward_once(input1)
-    #     output2 = self.forward_once(input2)
-    #     return output1, output2
+    def forward(self, input1, input2):
+        output1 = self.forward_once(input1)
+        output2 = self.forward_once(input2)
+        return output1, output2
 
 net = Net()
 net.cuda()
@@ -115,35 +117,29 @@ net.cuda()
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(net.parameters())
 
+counter = []
+loss_history = []
+iteration_number = 0
+
 # Train the Model
 for epoch in range(num_epochs):
-    for i, (images, labels) in enumerate(train_loader):
-        images = Variable(images).cuda()
-        labels = Variable(labels).cuda()
+    for i, data in enumerate(train_loader):
+        img0, img1, label = data
+	img0 = Variable(img0).cuda()
+	img1 = Variable(img1).cuda()
+	label = Variable(label).cuda()
 
         # Forward + Backward + Optimize
+	output1, output2 = net(img0, img1)
         optimizer.zero_grad()
-        outputs = net(images)
-        loss = criterion(outputs, labels)
+
+        loss = criterion(output1, output2, label)
         loss.backward()
         optimizer.step()
 
-        if (i + 1) % 100 == 0:
-            print ('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f'
-                   % (epoch + 1, num_epochs, i + 1, len(train_dataset) // batch_size, loss.data[0]))
-
-# Test the Model
-net.eval()    # Change model to 'eval' mode (BN uses moving mean/var).
-correct = 0
-total = 0
-for images, labels in test_loader:
-    images = Variable(images).cuda()
-    outputs = net(images)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted.cpu() == labels).sum()
-
-print('Test Accuracy of the model on the 10000 test images: %d %%' % (100 * correct / total))
+	if i % 10 == 0:
+		print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
+		iteration_number += 10
 
 # Save the Trained Model
 torch.save(net.state_dict(), 'net.pkl')
