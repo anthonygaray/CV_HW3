@@ -11,13 +11,25 @@ import torch.nn as nn
 import torch.utils.data as data
 from c import LFW, Net
 import sys
+from random import *
+import skimage
+
+def get_prob():
+
+    num = randint(1, 10)
+
+    if (num >= 1 and num <= 7):
+        return True;
+    elif (num > 7 and num <= 10):
+        return False
+
 
 # Hyper Parameters
 num_epochs = 5
 batch_size = 10
 learning_rate = 0.01
 
-#if torch.cuda.is_available():
+# if torch.cuda.is_available():
 #    torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
 # LFW Dataset
@@ -28,11 +40,10 @@ test_dataset = LFW('test.txt', transform=transforms.Compose([transforms.Scale((1
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, num_workers=2, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, num_workers=2, shuffle=False)
 
-
 if (len(sys.argv) < 2):
     print ('Error: Please enter an argument')
 
-elif(sys.argv[1] == '--save'):
+elif (sys.argv[1] == '--save'):
 
     if (len(sys.argv) == 3):
 
@@ -51,6 +62,14 @@ elif(sys.argv[1] == '--save'):
         for epoch in range(num_epochs):
             for i, data in enumerate(train_loader):
                 img1, img2, label = data
+
+                # if (sys.argv[3] == '--aug'):
+                #
+                #     if (get_prob()):
+                #
+
+                img1 = skimage.transform.rotate(img1, angle=10, resize=False)
+
                 img1 = Variable(img1).cuda()
                 img2 = Variable(img2).cuda()
                 label = Variable(label).cuda()
@@ -79,10 +98,10 @@ elif(sys.argv[1] == '--save'):
 
 elif (sys.argv[1] == '--load'):
 
-    if (len(sys.argv) == 3):
+    if (len(sys.argv) >= 3):
 
         net = Net(bin=True)
-	net.cuda()
+        net.cuda()
         net.load_state_dict(torch.load(sys.argv[2]))
         correct = 0
         total = 0
@@ -93,24 +112,27 @@ elif (sys.argv[1] == '--load'):
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
             out = net(img1, img2)
-	    predicted = out.data.cpu().numpy()
-	    actual = label.numpy()
+            predicted = out.data.cpu().numpy()
+            actual = label.numpy()
 
             for i, val in enumerate(predicted):
 
-		if (val[0] >= thresh):
+                if (val[0] >= thresh):
                     round_val = 1
                 else:
                     round_val = 0
-                
+
                 if (round_val == actual[i]):
                     correct += 1
 
             total += label.size(0)
-	
-	print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
-	print('Correct: %d' % correct)
-	print('Total: %d' % total) 
-	
+
+        print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
+        print('Correct: %d' % correct)
+        print('Total: %d' % total)
+
     else:
         print ("Error: File name needed")
+
+
+
