@@ -12,24 +12,55 @@ import torch.utils.data as data
 from c import LFW, Net
 import sys
 from random import *
-from skimage import data
-import cv2
 
-def get_prob():
 
+def get_prob(prob):
     num = randint(1, 10)
 
-    if (num >= 1 and num <= 7):
+    if (num >= 1 and num <= prob):
         return True;
-    elif (num > 7 and num <= 10):
+    elif (num > prob and num <= 10):
         return False
+
 
 def apply_transforms(img):
 
-	I = 255 * img.numpy()
-        I = I.astype('uint8')
-        im = Image.fromarray(I, 'RGB')
+    # CONVERT TO PIL
+    I = 255 * img.numpy()
+    I = I.astype('uint8')
+    conv_to_PIL = transforms.ToPILImage()
+    im = conv_to_PIL(I)
+
+    # ROTATE
+    if (get_prob(5)):
+        angle = randint(-30, 30)
+        im = im.rotate(angle)
+
+    # FLIP
+    if (get_prob(5)):
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
+
+    # TRANSLATE
+    if (get_prob(5)):
+        horiz = randint(-10, 10)
+        vert = randint(-10, 10)
+        im = im.transform(im.size, Image.AFFINE, (1, 0, horiz, 0, 1, vert))  # c is l/r and f is u/d
+
+    # SCALE
+    if (get_prob(5)):
+        scale = uniform(0.7, 1.3)
+        new_dim = int(128 * scale)
+
+        im_resize = im.resize((new_dim, new_dim))
+        im = Image.new("RGB", (128, 128), "black")
+        h, w = im_resize.size
+        im.paste(im_resize, (0, 0))
+
+    # BACK TO TENSOR
+    conv_to_tensor = transforms.ToTensor()
+    tr_img = conv_to_tensor(im)
+
+    return tr_img
 
 # Hyper Parameters
 num_epochs = 5
@@ -69,48 +100,36 @@ elif (sys.argv[1] == '--save'):
         for epoch in range(num_epochs):
             for i, data in enumerate(train_loader):
                 img1, img2, label = data
-		print('train load', img1.shape)
-                # if (sys.argv[3] == '--aug'):
-                #
-                #     if (get_prob()):
-                #
-		
 
-		for ind, img in enumerate(img1):
-			#print('img from batch', img.shape)
-			img = img.permute(1, 2, 0)
-			print('after permute', img.shape)
-			I = 255 * img.numpy()
-			I = I.astype('uint8')
-			conv = transforms.ToPILImage()
-			im = conv(I)
-			
-			im = im.rotate(10)
-			im = im.transpose(Image.FLIP_LEFT_RIGHT)
-			im = im.transform(im.size, Image.AFFINE, (1, 0, 5, 0, 1, 0)) # c is l/r and f is u/d
-			im_resize = im.resize((102, 102))
-			
-			im = Image.new("RGB", (128, 128), "black")
-			h, w = im_resize.size
-			im.paste(im_resize, (64 - w/2, 64 - h/2))
+                if (sys.argv[3] == '--aug'):
 
-			print('after transforms', im_resize.size)
-			#cv2.imwrite('img.png', I)
-			#im = rotate(I, 10, resize=False)
-			#im = np.flip(im, 1).copy()
-			#tf_shift = SimilarityTransform(translation=(10, 0))
-			
-			#i = 0
-			#b, g, r = cv2.split(im)
-			#print(b, g, r)
+                    for ind, img in enumerate(img1):
 
-			#print(im.shape)
-			
-			conversion = transforms.ToTensor()
-			tr_img = conversion(im)
-			print('back to tensor', tr_img.shape)
-			img1[ind] = tr_img
-			
+                        if (get_prob(7)): # If prob then apply transforms
+
+                            # Permute
+                            img = img.permute(1, 2, 0)
+
+                            # Apply random transforms
+                            tr_img = apply_transforms(img)
+
+                            # Add tensor to img array
+                            img1[ind] = tr_img
+
+                    for ind, img in enumerate(img2):
+
+                        if (get_prob(7)):  # If prob then apply transforms
+
+                            # Permute
+                            img = img.permute(1, 2, 0)
+
+                            # Apply random transforms
+                            tr_img = apply_transforms(img)
+
+                            # Add tensor to img array
+                            img2[ind] = tr_img
+
+
                 img1 = Variable(img1).cuda()
                 img2 = Variable(img2).cuda()
                 label = Variable(label).cuda()
@@ -174,6 +193,3 @@ elif (sys.argv[1] == '--load'):
 
     else:
         print ("Error: File name needed")
-
-
-

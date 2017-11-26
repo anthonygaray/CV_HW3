@@ -24,7 +24,7 @@ class LFW(data.Dataset):
     def __getitem__(self, index):
         img1 = Image.open('lfw/' + self.data_loc[index][0])
         img2 = Image.open('lfw/' + self.data_loc[index][1])
-	
+
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
@@ -42,7 +42,7 @@ class Net(nn.Module):
     def __init__(self, bin=False):
         super(Net, self).__init__()
         # set up convolution layers
-	self.bin = bin
+        self.bin = bin
 
         self.layer1 = nn.Sequential(
             nn.Conv2d(3, 64, 5, stride=1, padding=2),
@@ -77,9 +77,9 @@ class Net(nn.Module):
             nn.BatchNorm2d(1024)
         )
 
-	self.binarylayer = nn.Sequential(
-		nn.Linear(2048, 1),
-		nn.Sigmoid()
+        self.binarylayer = nn.Sequential(
+            nn.Linear(2048, 1),
+            nn.Sigmoid()
         )
 
     def forward_once(self, x):
@@ -95,10 +95,9 @@ class Net(nn.Module):
         output1 = self.forward_once(input1)
         output2 = self.forward_once(input2)
 
-	if (self.bin):
-		merged_out = torch.cat([output1, output2], 1)
-		out = self.binarylayer(merged_out)
-		return out
-	else:
-        	return output1, output2
-
+        if (self.bin):
+            merged_out = torch.cat([output1, output2], 1)
+            out = self.binarylayer(merged_out)
+            return out
+        else:
+            return output1, output2
