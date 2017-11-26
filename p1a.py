@@ -100,34 +100,35 @@ elif (sys.argv[1] == '--save'):
             for i, data in enumerate(train_loader):
                 img1, img2, label = data
 
-                if (sys.argv[3] == '--aug'):
+                if (len(sys.argv) == 4):
 
-                    for ind, img in enumerate(img1):
+                    if (sys.argv[3] == '--aug'):
 
-                        if (get_prob(7)): # If prob then apply transforms
+                        for ind, img in enumerate(img1):
 
-                            # Permute
-                            img = img.permute(1, 2, 0)
+                            if (get_prob(7)): # If prob then apply transforms
 
-                            # Apply random transforms
-                            tr_img = apply_transforms(img)
+                                # Permute
+                                img = img.permute(1, 2, 0)
 
-                            # Add tensor to img array
-                            img1[ind] = tr_img
+                                # Apply random transforms
+                                tr_img = apply_transforms(img)
 
-                    for ind, img in enumerate(img2):
+                                # Add tensor to img array
+                                img1[ind] = tr_img
 
-                        if (get_prob(7)):  # If prob then apply transforms
+                        for ind, img in enumerate(img2):
 
-                            # Permute
-                            img = img.permute(1, 2, 0)
+                            if (get_prob(7)):  # If prob then apply transforms
 
-                            # Apply random transforms
-                            tr_img = apply_transforms(img)
+                                # Permute
+                                img = img.permute(1, 2, 0)
 
-                            # Add tensor to img array
-                            img2[ind] = tr_img
+                                # Apply random transforms
+                                tr_img = apply_transforms(img)
 
+                                # Add tensor to img array
+                                img2[ind] = tr_img
 
                 img1 = Variable(img1).cuda()
                 img2 = Variable(img2).cuda()
