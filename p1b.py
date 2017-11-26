@@ -9,7 +9,7 @@ from torch.autograd import Variable
 from PIL import Image
 import torch.nn as nn
 import torch.utils.data as data
-from c import LFW, Net
+from c import LFW, Net, ContrastiveLoss
 import sys
 from random import *
 
@@ -84,11 +84,11 @@ elif (sys.argv[1] == '--save'):
 
     if (len(sys.argv) >= 3):
 
-        net = Net(bin=True)
+        net = Net(bin=False)
         net.cuda()
 
         # Loss and Optimizer
-        criterion = nn.BCELoss()
+        criterion = ContrastiveLoss()
         optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate)
 
         counter = []
@@ -135,18 +135,18 @@ elif (sys.argv[1] == '--save'):
                 label = Variable(label).cuda()
 
                 # Forward + Backward + Optimize
-                out = net(img1, img2)
+                out1, out2 = net(img1, img2)
 
                 optimizer.zero_grad()
-                loss = criterion(out, label)
-                loss.backward()
+                contrastive_loss = criterion(out1, out2, label)
+                contrastive_loss.backward()
                 optimizer.step()
 
                 if i % 10 == 0:
-                    print("Epoch {}\n Current loss {}\n".format(epoch, loss.data[0]))
+                    print("Epoch {}\n Current loss {}\n".format(epoch, contrastive_loss.data[0]))
                     iteration_number += 10
                     counter.append(iteration_number)
-                    loss_history.append(loss.data[0])
+                    loss_history.append(contrastive_loss.data[0])
 
         # show_plot(counter,loss_history)
 
@@ -160,14 +160,16 @@ elif (sys.argv[1] == '--load'):
 
     if (len(sys.argv) >= 3):
 
-        net = Net(bin=True)
+        net = Net(bin=False)
         net.cuda()
         net.load_state_dict(torch.load(sys.argv[2]))
         correct = 0
         total = 0
         thresh = 0.5
 
-        for i, data in enumerate(test_loader):
+        #TODO enter testing code for dissimilarity
+
+        for i, data in enumerate(train_loader):
             img1, img2, label = data
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
