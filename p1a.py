@@ -13,6 +13,10 @@ from c import LFW, Net
 import sys
 from random import *
 
+# Hyper Parameters
+num_epochs = 30
+batch_size = 100
+learning_rate = 0.01
 
 def get_prob(prob):
     num = randint(1, 10)
@@ -62,11 +66,6 @@ def apply_transforms(img):
 
     return tr_img
 
-# Hyper Parameters
-num_epochs = 5
-batch_size = 10
-learning_rate = 0.01
-
 # if torch.cuda.is_available():
 #    torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
@@ -83,7 +82,7 @@ if (len(sys.argv) < 2):
 
 elif (sys.argv[1] == '--save'):
 
-    if (len(sys.argv) == 3):
+    if (len(sys.argv) >= 3):
 
         net = Net(bin=True)
         net.cuda()
@@ -167,7 +166,7 @@ elif (sys.argv[1] == '--load'):
         total = 0
         thresh = 0.5
 
-        for i, data in enumerate(test_loader):
+        for i, data in enumerate(train_loader):
             img1, img2, label = data
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
