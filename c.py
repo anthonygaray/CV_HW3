@@ -24,7 +24,7 @@ class LFW(data.Dataset):
     def __getitem__(self, index):
         img1 = Image.open('lfw/' + self.data_loc[index][0])
         img2 = Image.open('lfw/' + self.data_loc[index][1])
-
+	
         if self.transform is not None:
             img1 = self.transform(img1)
             img2 = self.transform(img2)
