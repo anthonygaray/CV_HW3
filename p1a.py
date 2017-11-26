@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
 import numpy as np
+import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from PIL import Image
 import torch.nn as nn
@@ -14,8 +15,8 @@ import sys
 from random import *
 
 # Hyper Parameters
-num_epochs = 30
-batch_size = 100
+num_epochs = 5
+batch_size = 10
 learning_rate = 0.01
 
 def get_prob(prob):
