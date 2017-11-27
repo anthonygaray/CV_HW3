@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 from PIL import Image
@@ -15,8 +17,8 @@ import sys
 from random import *
 
 # Hyper Parameters
-num_epochs = 5
-batch_size = 10
+num_epochs = 1
+batch_size = 5
 learning_rate = 0.01
 
 def get_prob(prob):
@@ -149,7 +151,10 @@ elif (sys.argv[1] == '--save'):
                     counter.append(iteration_number)
                     loss_history.append(loss.data[0])
 
-        # show_plot(counter,loss_history)
+        plt.plot(counter,loss_history)
+	plt.xlabel('Iteration')
+	plt.ylabel('Loss')
+	plt.savefig('loss.png')
 
         # Save the Trained Model
         torch.save(net.state_dict(), sys.argv[2])
