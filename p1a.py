@@ -16,10 +16,10 @@ import sys
 from random import *
 
 # Hyper Parameters
-num_epochs = 1
-batch_size = 5
+num_epochs = 30
+batch_size = 64
 learning_rate = 0.01
-filename = 'p1a_loss.png'
+filename = 'p1a_loss_aug.png'
 
 
 def get_prob(prob):
@@ -154,8 +154,9 @@ elif (sys.argv[1] == '--save'):
 
         # Save image of loss
         plt.plot(counter, loss_history)
-        plt.xlabel('Iteration')
+        plt.xlabel('Time')
         plt.ylabel('Loss')
+	plt.title('Loss for ' + str(num_epochs) + " Epochs and Batch Size of " + str(batch_size))
         plt.savefig(filename)
 
         # Save the Trained Model
@@ -173,9 +174,9 @@ elif (sys.argv[1] == '--load'):
         net.load_state_dict(torch.load(sys.argv[2]))
         correct = 0
         total = 0
-        thresh = 0.5
+        thresh = 0.6
 
-        for i, data in enumerate(test_loader):
+        for i, data in enumerate(train_loader):
             img1, img2, label = data
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
