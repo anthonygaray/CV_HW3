@@ -1,6 +1,5 @@
 import torch
 import torchvision
-import torchvision.datasets as dset
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -21,6 +20,8 @@ import torch.nn.functional as F
 num_epochs = 4
 batch_size = 10
 learning_rate = 0.01
+filename = 'p1a_loss.png'
+
 
 def get_prob(prob):
     num = randint(1, 10)
@@ -32,7 +33,6 @@ def get_prob(prob):
 
 
 def apply_transforms(img):
-
     # CONVERT TO PIL
     I = 255 * img.numpy()
     I = I.astype('uint8')
@@ -69,6 +69,7 @@ def apply_transforms(img):
     tr_img = conv_to_tensor(im)
 
     return tr_img
+
 
 # if torch.cuda.is_available():
 #    torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -110,7 +111,7 @@ elif (sys.argv[1] == '--save'):
 
                         for ind, img in enumerate(img1):
 
-                            if (get_prob(7)): # If prob then apply transforms
+                            if (get_prob(7)):  # If prob then apply transforms
 
                                 # Permute
                                 img = img.permute(1, 2, 0)
@@ -143,7 +144,7 @@ elif (sys.argv[1] == '--save'):
 
                 optimizer.zero_grad()
                 contrastive_loss = criterion(out1, out2, label)
-		contrastive_loss.backward()
+                contrastive_loss.backward()
                 optimizer.step()
 
                 if i % 10 == 0:
@@ -152,7 +153,11 @@ elif (sys.argv[1] == '--save'):
                     counter.append(iteration_number)
                     loss_history.append(contrastive_loss.data[0])
 
-        # show_plot(counter,loss_history)
+        # Save image of loss
+        plt.plot(counter, loss_history)
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+        plt.savefig(filename)
 
         # Save the Trained Model
         torch.save(net.state_dict(), sys.argv[2])
@@ -171,48 +176,34 @@ elif (sys.argv[1] == '--load'):
         total = 0
         thresh = 0.5
 
-        #TODO enter testing code for dissimilarity
+        for i, data in enumerate(test_loader):
 
-        #for i, data in enumerate(test_loader):
-        #	img1, img2, label = data
-        #	img1 = Variable(img1).cuda()
-        #	img2 = Variable(img2).cuda()
-        #	out1, out2 = net(img1, img2)
-        #	print('out1', out1)
-	#	predicted = out.data.cpu().numpy()
-        #	actual = label.numpy()
+            # Get in data as batches
+            img1, img2, label = data
+            img1 = Variable(img1).cuda()
+            img2 = Variable(img2).cuda()
+            out1, out2 = net(img1, img2)
 
-	dataiter = iter(test_loader)
-	x0,_,_ = next(dataiter)
-	torchvision.utils.save_image(x0, 'x0.png')
+            # Get batch of euclidean distance
+            dist = F.pairwise_distance(out1, out2)
+            dist = dist.data.cpu().numpy()
+            actual = label.numpy()
 
-    	_,x1,label2 = next(dataiter)
-	torchvision.utils.save_image(x1, 'x1.png')
-    	concatenated = torch.cat((x0,x1),0)
-	x0 = Variable(x0).cuda()
-	x1 = Variable(x1).cuda()
-    	output1, output2 = net(x0, x1)
-	euclidean_distance = F.pairwise_distance(output1, output2)
-	print('e-dist', euclidean_distance)
+            for i, val in enumerate(dist):
 
-    	torchvision.utils.save_image(concatenated, 'concat.png')
-	print('Dissimilarity: {:.2f}'.format(euclidean_distance.cpu().data.numpy()[0][0]))
+                if (val[0] >= thresh):
+                    round_val = 1
+                else:
+                    round_val = 0
 
-#            for i, val in enumerate(predicted):
-#
-#                if (val[0] >= thresh):
-#                    round_val = 1
-#                else:
-#                    round_val = 0
+                if (round_val == actual[i]):
+                    correct += 1
 
-#                if (round_val == actual[i]):
-#                    correct += 1
+            total += label.size(0)
 
-#            total += label.size(0)
-
-#        print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
-#        print('Correct: %d' % correct)
-#        print('Total: %d' % total)
+        print('Test Accuracy of the model on the test images: %d %%' % (100 * correct / total))
+        print('Correct: %d' % correct)
+        print('Total: %d' % total)
 
     else:
         print ("Error: File name needed")

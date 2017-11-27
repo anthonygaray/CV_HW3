@@ -1,6 +1,5 @@
 import torch
 import torchvision
-import torchvision.datasets as dset
 from torch.utils.data import DataLoader
 import torchvision.transforms as transforms
 import torch.optim as optim
@@ -20,6 +19,8 @@ from random import *
 num_epochs = 1
 batch_size = 5
 learning_rate = 0.01
+filename = 'p1a_loss.png'
+
 
 def get_prob(prob):
     num = randint(1, 10)
@@ -31,7 +32,6 @@ def get_prob(prob):
 
 
 def apply_transforms(img):
-
     # CONVERT TO PIL
     I = 255 * img.numpy()
     I = I.astype('uint8')
@@ -68,6 +68,7 @@ def apply_transforms(img):
     tr_img = conv_to_tensor(im)
 
     return tr_img
+
 
 # if torch.cuda.is_available():
 #    torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -109,7 +110,7 @@ elif (sys.argv[1] == '--save'):
 
                         for ind, img in enumerate(img1):
 
-                            if (get_prob(7)): # If prob then apply transforms
+                            if (get_prob(7)):  # If prob then apply transforms
 
                                 # Permute
                                 img = img.permute(1, 2, 0)
@@ -151,10 +152,11 @@ elif (sys.argv[1] == '--save'):
                     counter.append(iteration_number)
                     loss_history.append(loss.data[0])
 
-        plt.plot(counter,loss_history)
-	plt.xlabel('Iteration')
-	plt.ylabel('Loss')
-	plt.savefig('loss.png')
+        # Save image of loss
+        plt.plot(counter, loss_history)
+        plt.xlabel('Iteration')
+        plt.ylabel('Loss')
+        plt.savefig(filename)
 
         # Save the Trained Model
         torch.save(net.state_dict(), sys.argv[2])
