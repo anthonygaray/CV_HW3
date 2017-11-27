@@ -1,1 +1,66 @@
-Test 2
+//-------------------------------------------------------------------------------------------------------------//
+// Name: Anthony Garay
+// Email: agaray1@jhu.edu
+// JHED ID: agaray1
+// 600.461 - Computer Vision
+// Assignment 3
+//-------------------------------------------------------------------------------------------------------------//
+
+README
+
+* Google Drive Address with Models *
+https://drive.google.com/drive/folders/1DQ-B0jZUVp7pjWE4LZAjJHxw327w_HSr?usp=sharing
+
+Please note that I used my startup's G-Suite drive since my personal drive is almost full.  If there are any problems
+with the sharing settings, please let me know.
+
+* Description *
+
+Here is my README for the 3rd homework assignment.  This was perhaps one of the more challenging assignments in this
+course.  After reading a ton of documentation on PyTorch and all the other classes and methods we implemented, I'm glad
+to have gotten the opportunity to learn and apply this material.  Classes don't always give assignments that are
+real world applications of material so I appreciated getting to apply what we've learned in class on a real-world
+scenario.
+
+* The Network - c.py *
+
+Before creating the network, I set about creating a dataset for the data we were given.  I made my own LFW class and
+created a dataset by first parsing the text file and then using PIL to open the images.
+
+The Network itself is a direct implementation of the specifications given in the assignment.  In order to do the Binary
+layer for part A, however, I added an additional parameter in the constructor to indicate that it should run the Binary
+layer.  I created a siamese network by creating a forward_once method that goes through each layer individually.  The
+forward method then goes about passing two inputs through the same network.
+
+Lastly, for part b, I built a Contrastive Loss function that takes the euclidean distance and then uses the given
+formula to calculate the contrastive loss.
+
+* Part a - p1a.py *
+
+For part a, I created a program that takes --save or --load as parameters along with a file in order to Save or Load a
+model. Additionally, I included a '--aug' parameter after the model file name that signals the program to run with data
+augmentation.  Ex: 'python ./p1a.py --save p1a_aug.pkl --aug'.
+
+For creating the models, the program loads in data, runs it through a siamese network with a binary flag (so that the
+binary layer runs) and then uses BCELoss to calculate loss.  For loading models, the program takes in a .pkl file
+and then loads a dataset (you can specify the training or testing dataset).  It then runs the images through the network
+and compares the result to the given labels in the dataset.  It then uses given threshold to convert the sigmoid into
+a discrete decision.
+
+I created helper functions in order to aid with data augmentation. get_prob() allows you to run code with a given
+probability and apply_transforms takes in a tensor, converts it to a PIL Image, applies a series of transforms (each
+with a probability of 0.5), and then returns it as a tensor again.
+
+* Part b - p1b.py *
+
+For part b, I created a program that behaves in the same way as p1a.py by using --load, --save, and an optional --aug
+parameter to control the program.
+
+For creating the models, the program loads in data, runs it through a siamese network without the binary flag and then
+uses the ContrastiveLoss function I wrote to calculate loss. For loading models, the program takes in a .pkl file
+and then loads a dataset (you can specify the training or testing dataset).  It then runs the images through the network
+and compares the distances of a pair of images in the batch to the given labels in the dataset.  It uses a given threshold
+to convert the distance into a discrete decision.  For my program I used a margin of 1.0 (and experimented with the
+threshold).
+
+I used the same helper functions for the data augmentation in p1b.py as I did in p1a.py.

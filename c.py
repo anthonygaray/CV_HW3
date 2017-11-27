@@ -11,6 +11,11 @@ import torch.nn as nn
 import torch.utils.data as data
 import torch.nn.functional as F
 
+# # # # # # # #
+# Assignment 3
+# Anthony Garay
+# c.py
+# # # # # # # #
 
 class LFW(data.Dataset):
     def __init__(self, data_file, transform=None):

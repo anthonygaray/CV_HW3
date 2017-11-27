@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 import numpy as np
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
@@ -14,6 +15,12 @@ import torch.utils.data as data
 from c import LFW, Net
 import sys
 from random import *
+
+# # # # # # # #
+# Assignment 3
+# Anthony Garay
+# p1a.py
+# # # # # # # #
 
 # Hyper Parameters
 num_epochs = 30
@@ -156,7 +163,7 @@ elif (sys.argv[1] == '--save'):
         plt.plot(counter, loss_history)
         plt.xlabel('Time')
         plt.ylabel('Loss')
-	plt.title('Loss for ' + str(num_epochs) + " Epochs and Batch Size of " + str(batch_size))
+        plt.title('Loss for ' + str(num_epochs) + " Epochs and Batch Size of " + str(batch_size))
         plt.savefig(filename)
 
         # Save the Trained Model
@@ -176,7 +183,7 @@ elif (sys.argv[1] == '--load'):
         total = 0
         thresh = 0.6
 
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(test_loader):
             img1, img2, label = data
             img1 = Variable(img1).cuda()
             img2 = Variable(img2).cuda()
